@@ -84,3 +84,5 @@
 | Ingestion | *TBD* | *TBD* | *TBD* |
 | Intelligence | *TBD* | *TBD* | *TBD* |
 | Answer | *TBD* | *TBD* | *TBD* |
+
+Add .md extension
