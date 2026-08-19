@@ -28,7 +28,7 @@
 
 | Pre-ingestion | Ingestion | Intelligence | Answer | Analytics |
 |---|---|---|---|---|
-| Selection | Storage, Versioning, Data governance, Currency | Data tagging, Retrieval logic, Conflict management / reconciliation | Policy content delivery, Trust markers | — |
+| Selection | Storage, Versioning, Data governance, Currency, Comprehensiveness | Data tagging, Retrieval logic, Conflict management / reconciliation | Policy content delivery, Trust markers | — |
 
 ---
 
