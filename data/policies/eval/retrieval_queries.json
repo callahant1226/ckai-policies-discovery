@@ -1,0 +1,62 @@
+[
+  {
+    "query": "What's the process for double-checking a high-alert medication before giving it?",
+    "expected_doc_ids": ["medication-double-check"]
+  },
+  {
+    "query": "Which drug names look alike or sound alike that we need to be careful not to mix up?",
+    "expected_doc_ids": ["high-alert-medications-and-spelled-alike-sound-alike-drug-products"]
+  },
+  {
+    "query": "What's our policy for treating opioid use disorder with buprenorphine or methadone?",
+    "expected_doc_ids": ["ohsu-medications-for-opioid-use-disorder-moud-policy"]
+  },
+  {
+    "query": "How do I safely administer a rituximab infusion?",
+    "expected_doc_ids": ["rituximab-infusion-order-form"]
+  },
+  {
+    "query": "What monitoring is required for intraperitoneal chemotherapy administration?",
+    "expected_doc_ids": ["intraperitoneal-chemotherapy-order-form"]
+  },
+  {
+    "query": "What are the rules for taking a verbal or telephone order for patient care?",
+    "expected_doc_ids": ["policy-8-01-general-patient-care-orders"]
+  },
+  {
+    "query": "What's the anticoagulation management protocol for a COVID-19 patient?",
+    "expected_doc_ids": ["covid-19-anticoagulation-management-algorithm"]
+  },
+  {
+    "query": "Where can I find the hospital's current antibiotic susceptibility data?",
+    "expected_doc_ids": ["antibiogram-a-clinician-s-guide", "2024-barnes-jewish-hospital-antibiogram"]
+  },
+  {
+    "query": "What's the maintenance bundle to prevent central-line-associated bloodstream infections?",
+    "expected_doc_ids": ["clabsi-maintenance-bundle"]
+  },
+  {
+    "query": "What's the discharge checklist for a patient going home on outpatient IV antibiotics?",
+    "expected_doc_ids": ["opat-discharging-nurse-checklist"]
+  },
+  {
+    "query": "What's the guidance for managing a patient with a C. diff infection?",
+    "expected_doc_ids": ["vasp-c-difficile-infection-guidance"]
+  },
+  {
+    "query": "What PPE do I need to don and doff for a patient in isolation in the ED?",
+    "expected_doc_ids": ["emergency-department-ppe-donning-doffing-checklist"]
+  },
+  {
+    "query": "What's our hand hygiene policy and procedure?",
+    "expected_doc_ids": ["fontana-ontario-hand-hygiene-policy-and-procedure"]
+  },
+  {
+    "query": "What's the protocol for a suspected hemorrhagic fever patient needing biocontainment?",
+    "expected_doc_ids": ["biocontainment-unit-brochure"]
+  },
+  {
+    "query": "What do I need to do if I suspect a patient has measles?",
+    "expected_doc_ids": ["acute-measles-rubeola-order-attestation-notification"]
+  }
+]

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Policy Retrieval Test (throwaway)</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --border: #d9dce1;
+    --text: #1f2328;
+    --muted: #6a737d;
+    --accent: #0b5fff;
+    --user-bubble: #0b5fff;
+    --user-bubble-text: #ffffff;
+    --med: #0b5fff;
+    --inf: #b35900;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .app {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 24px 16px 120px;
+  }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+  .controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+  }
+  .field-label { font-size: 12px; color: var(--muted); margin-right: 4px; }
+  select, input[type="text"], input[type="number"] {
+    font-size: 13px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text);
+  }
+  input[type="number"] { width: 60px; }
+  .feed { display: flex; flex-direction: column; gap: 14px; }
+  .msg-row { display: flex; }
+  .msg-row.user { justify-content: flex-end; }
+  .bubble {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+  .bubble.user {
+    background: var(--user-bubble);
+    color: var(--user-bubble-text);
+    border-bottom-right-radius: 3px;
+  }
+  .bubble.meta { background: transparent; color: var(--muted); font-size: 12px; padding: 0 4px; }
+  .response-panel {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .status-line {
+    padding: 8px 12px;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .status-line.ok { color: #1a7f37; }
+  .status-line.err { color: #cf222e; }
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+  @media (max-width: 720px) { .columns { grid-template-columns: 1fr; } }
+  .column { background: var(--panel); padding: 12px; }
+  .column h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 8px; }
+  .empty-note { color: var(--muted); font-size: 12px; font-style: italic; }
+  .result-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+  }
+  .result-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .rank { font-size: 11px; font-weight: 600; color: var(--muted); }
+  .score { font-size: 11px; color: var(--muted); font-family: ui-monospace, monospace; }
+  .cat-badge {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: 999px;
+    color: #fff;
+    margin-left: auto;
+  }
+  .cat-badge.medication { background: var(--med); }
+  .cat-badge.infection { background: var(--inf); }
+  .result-title { font-size: 13px; font-weight: 600; }
+  .result-meta { font-size: 11px; color: var(--muted); margin: 2px 0 6px; }
+  .result-text { font-size: 12px; line-height: 1.4; color: var(--text); }
+  details.raw-json-accordion {
+    margin: 0;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding: 8px 12px;
+  }
+  details.raw-json-accordion summary { cursor: pointer; padding: 4px 0; }
+  details.raw-json-accordion pre {
+    background: #0d1117;
+    color: #c9d1d9;
+    padding: 8px;
+    border-radius: 6px;
+    max-height: 480px;
+    overflow: auto;
+  }
+  .composer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+  }
+  .composer-inner { max-width: 980px; margin: 0 auto; display: flex; gap: 8px; }
+  .composer-inner input[type="text"] { flex: 1; padding: 10px 12px; font-size: 14px; }
+  .composer-inner button {
+    padding: 10px 18px;
+    font-size: 14px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+  }
+  .composer-inner button:disabled { background: #9db8ec; cursor: default; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Policy Retrieval Test <span style="color:var(--muted); font-weight:normal;">(throwaway)</span></h1>
+  <div class="subtitle">
+    Tests only the "Initial retrieval" step (specs/intelligence_logic.md §4): a raw question straight into
+    keyword (FTS5/BM25) and semantic (embedding cosine) search against data/policies/index.db.
+    No intent extraction, no CKAI call, no CKAI-informed refinement — those are separate, later, still-open steps.
+  </div>
+  <div class="subtitle" style="color:#b35900;">
+    Requires <code>retrieval_test_server.py</code> running locally (<code>python -m backend.policy_store.retrieval_test_server</code>)
+    and the index already built (<code>python -m backend.policy_store.ingest build</code>).
+  </div>
+
+  <div class="controls">
+    <div>
+      <span class="field-label">Category</span>
+      <select id="categorySelect">
+        <option value="">Any</option>
+        <option value="medication">Medication</option>
+        <option value="infection">Infection</option>
+      </select>
+    </div>
+    <div>
+      <span class="field-label">Top-K</span>
+      <input type="number" id="topKInput" value="5" min="1" max="20">
+    </div>
+  </div>
+
+  <div class="feed" id="feed"></div>
+</div>
+
+<div class="composer">
+  <div class="composer-inner">
+    <input type="text" id="questionInput" placeholder="Ask a clinician-style policy question…" autocomplete="off">
+    <button id="searchBtn">Search</button>
+  </div>
+</div>
+
+<script>
+  const feed = document.getElementById("feed");
+  const questionInput = document.getElementById("questionInput");
+  const searchBtn = document.getElementById("searchBtn");
+  const categorySelect = document.getElementById("categorySelect");
+  const topKInput = document.getElementById("topKInput");
+
+  function addUserMessage(text) {
+    const row = document.createElement("div");
+    row.className = "msg-row user";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble user";
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    feed.appendChild(row);
+  }
+
+  function truncate(text, n) {
+    if (!text) return "";
+    return text.length > n ? text.slice(0, n).trimEnd() + "…" : text;
+  }
+
+  function buildResultCard(result, rank) {
+    const card = document.createElement("div");
+    card.className = "result-card";
+
+    const head = document.createElement("div");
+    head.className = "result-head";
+    const rankEl = document.createElement("span");
+    rankEl.className = "rank";
+    rankEl.textContent = "#" + rank;
+    const scoreEl = document.createElement("span");
+    scoreEl.className = "score";
+    scoreEl.textContent = "score " + Number(result.score).toFixed(3);
+    const catEl = document.createElement("span");
+    catEl.className = "cat-badge " + result.category;
+    catEl.textContent = result.category;
+    head.appendChild(rankEl);
+    head.appendChild(scoreEl);
+    head.appendChild(catEl);
+
+    const title = document.createElement("div");
+    title.className = "result-title";
+    title.textContent = result.doc_title;
+
+    const meta = document.createElement("div");
+    meta.className = "result-meta";
+    meta.textContent = result.doc_id + (result.section ? " · " + result.section : "");
+
+    const text = document.createElement("div");
+    text.className = "result-text";
+    text.textContent = truncate(result.text, 320);
+
+    card.appendChild(head);
+    card.appendChild(title);
+    card.appendChild(meta);
+    card.appendChild(text);
+    return card;
+  }
+
+  function buildColumn(title, results, emptyNote) {
+    const col = document.createElement("div");
+    col.className = "column";
+    const h = document.createElement("h3");
+    h.textContent = title;
+    col.appendChild(h);
+
+    if (results === null || results === undefined) {
+      const note = document.createElement("div");
+      note.className = "empty-note";
+      note.textContent = emptyNote;
+      col.appendChild(note);
+      return col;
+    }
+    if (!results.length) {
+      const note = document.createElement("div");
+      note.className = "empty-note";
+      note.textContent = "No results";
+      col.appendChild(note);
+      return col;
+    }
+    results.forEach((r, i) => col.appendChild(buildResultCard(r, i + 1)));
+    return col;
+  }
+
+  function addResponsePanel({ url, status, ok, durationMs, bodyText }) {
+    const row = document.createElement("div");
+    row.className = "msg-row";
+    const wrap = document.createElement("div");
+    wrap.style.width = "100%";
+
+    const panel = document.createElement("div");
+    panel.className = "response-panel";
+
+    const statusLine = document.createElement("div");
+    statusLine.className = "status-line " + (ok ? "ok" : "err");
+    const left = document.createElement("span");
+    left.textContent = "GET " + url;
+    const right = document.createElement("span");
+    right.textContent = (ok ? "OK" : "ERROR") + " — HTTP " + status + " — " + durationMs + "ms";
+    statusLine.appendChild(left);
+    statusLine.appendChild(right);
+    panel.appendChild(statusLine);
+
+    let parsed = null;
+    let parseFailed = false;
+    try {
+      parsed = JSON.parse(bodyText);
+    } catch (e) {
+      parseFailed = true;
+    }
+
+    if (!ok || parseFailed) {
+      const errBlock = document.createElement("div");
+      errBlock.style.padding = "12px 16px";
+      const pre = document.createElement("pre");
+      pre.style.margin = "0";
+      pre.style.whiteSpace = "pre-wrap";
+      pre.textContent = bodyText;
+      errBlock.appendChild(pre);
+      panel.appendChild(errBlock);
+    } else {
+      const columns = document.createElement("div");
+      columns.className = "columns";
+      columns.appendChild(buildColumn("Keyword (FTS5 / BM25)", parsed.keyword, "Not run"));
+      columns.appendChild(
+        buildColumn(
+          "Semantic (embedding cosine)",
+          parsed.semantic,
+          parsed.semantic_error ? "Error: " + parsed.semantic_error : "Not run (server started with --no-embed)"
+        )
+      );
+      panel.appendChild(columns);
+    }
+
+    const jsonDetails = document.createElement("details");
+    jsonDetails.className = "raw-json-accordion";
+    const jsonSummary = document.createElement("summary");
+    jsonSummary.textContent = "Full JSON response";
+    const jsonPre = document.createElement("pre");
+    jsonPre.textContent = parseFailed ? bodyText : JSON.stringify(parsed, null, 2);
+    jsonDetails.appendChild(jsonSummary);
+    jsonDetails.appendChild(jsonPre);
+    panel.appendChild(jsonDetails);
+
+    wrap.appendChild(panel);
+    row.appendChild(wrap);
+    feed.appendChild(row);
+    row.scrollIntoView({ behavior: "smooth", block: "end" });
+  }
+
+  async function search() {
+    const query = questionInput.value.trim();
+    if (!query) return;
+
+    addUserMessage(query);
+    questionInput.value = "";
+    searchBtn.disabled = true;
+
+    const params = new URLSearchParams({ query, top_k: topKInput.value || "5" });
+    if (categorySelect.value) params.set("category", categorySelect.value);
+    const url = "/api/retrieve?" + params.toString();
+
+    const started = performance.now();
+    try {
+      const res = await fetch(url);
+      const durationMs = Math.round(performance.now() - started);
+      const bodyText = await res.text();
+      addResponsePanel({ url, status: res.status, ok: res.ok, durationMs, bodyText });
+    } catch (err) {
+      const durationMs = Math.round(performance.now() - started);
+      addResponsePanel({
+        url, status: "—", ok: false, durationMs,
+        bodyText: "Fetch failed: " + String(err) +
+          "\n\nMost likely cause: retrieval_test_server.py isn't running. Start it with:\n  python -m backend.policy_store.retrieval_test_server"
+      });
+    } finally {
+      searchBtn.disabled = false;
+    }
+  }
+
+  searchBtn.addEventListener("click", search);
+  questionInput.addEventListener("keydown", (e) => { if (e.key === "Enter") search(); });
+</script>
+</body>
+</html>

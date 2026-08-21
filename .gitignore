@@ -1,2 +1,6 @@
 .DS_Store
 __pycache__/
+.venv/
+
+# Rebuilt from data/policies/raw/ + manifest.json via ingest.py — not source of truth
+data/policies/index.db

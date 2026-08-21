@@ -1,0 +1,20 @@
+# Policy store: storage, extraction, chunking, indexing (see specs/policy_storage.md)
+pydantic>=2
+pdfplumber>=0.11
+python-docx>=1.1
+beautifulsoup4>=4.12
+lxml>=5.0
+pandas>=2.2
+openpyxl>=3.1
+xlrd>=2.0.1
+
+# Embeddings for semantic search. torch/sentence-transformers wheels can lag
+# new CPython releases by months — if `pip install` fails on this line, use
+# `ingest.py build --no-embed` for keyword-only search, or a venv on an older
+# Python (3.11/3.12), until wheels for your Python version are published.
+numpy>=1.26
+sentence-transformers>=3.0
+
+# Lets sentence-transformers' first model download succeed on networks that
+# TLS-inspect HTTPS (e.g. Elsevier VPN) — see embeddings.py for why.
+truststore>=0.9
