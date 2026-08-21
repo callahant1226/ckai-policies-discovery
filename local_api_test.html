@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CKAI API Test (throwaway)</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --border: #d9dce1;
+    --text: #1f2328;
+    --muted: #6a737d;
+    --accent: #0b5fff;
+    --user-bubble: #0b5fff;
+    --user-bubble-text: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .app {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 24px 16px 120px;
+  }
+  h1 {
+    font-size: 18px;
+    margin: 0 0 4px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+  }
+  .tabs {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .tab-btn {
+    padding: 6px 14px;
+    font-size: 13px;
+    border: none;
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+  }
+  .field-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-right: 4px;
+  }
+  select, input[type="text"] {
+    font-size: 13px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text);
+  }
+  .feed {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .msg-row {
+    display: flex;
+  }
+  .msg-row.user { justify-content: flex-end; }
+  .bubble {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+  .bubble.user {
+    background: var(--user-bubble);
+    color: var(--user-bubble-text);
+    border-bottom-right-radius: 3px;
+  }
+  .bubble.meta {
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 0 4px;
+  }
+  .response-panel {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .response-panel .status-line {
+    padding: 8px 12px;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .response-panel .status-line.ok { color: #1a7f37; }
+  .response-panel .status-line.err { color: #cf222e; }
+  .response-panel pre {
+    margin: 0;
+    padding: 12px;
+    font-size: 12px;
+    max-height: 480px;
+    overflow: auto;
+    background: #0d1117;
+    color: #c9d1d9;
+  }
+  .answer-block {
+    padding: 14px 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .answer-block .no-answer-note {
+    color: var(--muted);
+    font-size: 12px;
+    font-style: italic;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .answer-block .guardrail-note {
+    color: #9a6700;
+    background: #fff8c5;
+    border: 1px solid #d4a72c;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12px;
+    margin-bottom: 10px;
+    display: block;
+  }
+  details.raw-json-accordion,
+  details.request-preview {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  details.raw-json-accordion summary,
+  details.request-preview summary {
+    cursor: pointer;
+    padding: 4px 0;
+  }
+  details.raw-json-accordion pre,
+  details.request-preview pre {
+    background: #0d1117;
+    color: #c9d1d9;
+    padding: 8px;
+    border-radius: 6px;
+    max-height: 480px;
+    overflow: auto;
+  }
+  details.request-preview pre {
+    background: #f0f1f3;
+    color: #333;
+    max-height: 240px;
+  }
+  .composer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+  }
+  .composer-inner {
+    max-width: 820px;
+    margin: 0 auto;
+    display: flex;
+    gap: 8px;
+  }
+  .composer-inner input[type="text"] {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  .composer-inner button {
+    padding: 10px 18px;
+    font-size: 14px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+  }
+  .composer-inner button:disabled {
+    background: #9db8ec;
+    cursor: default;
+  }
+  .experience-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #eef1f6;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>CKAI API Test <span style="color:var(--muted); font-weight:normal;">(throwaway)</span></h1>
+  <div class="subtitle">Sends a real request to the CKAI query API and shows the generated answer (llm_response.output_text). Full JSON response is collapsed below each answer — this is still just a smoke test, not the real rendering experience.</div>
+  <div class="subtitle" style="color:#b35900;">Requires <code>proxy_server.py</code> running locally on port 8010 (<code>python3 proxy_server.py</code>) — requests are routed through it to avoid the browser's CORS restrictions, since CKAI doesn't send Access-Control-Allow-Origin headers.</div>
+
+  <div class="controls">
+    <div>
+      <span class="field-label">Experience</span>
+      <div class="tabs">
+        <button class="tab-btn active" data-experience="physician" id="tabPhysician">Physician</button>
+        <button class="tab-btn" data-experience="nurse" id="tabNurse">Nurse</button>
+      </div>
+    </div>
+    <div>
+      <span class="field-label">Environment</span>
+      <select id="envSelect">
+        <option value="https://rag.dev.knowledge.healthcare.elsevier.systems">Dev</option>
+        <option value="https://rag.cert.knowledge.healthcare.elsevier.systems" selected>Cert</option>
+        <option value="custom">Custom base URL…</option>
+      </select>
+    </div>
+    <div id="customUrlWrap" style="display:none;">
+      <span class="field-label">Base URL</span>
+      <input type="text" id="customUrl" placeholder="https://..." size="40">
+    </div>
+  </div>
+
+  <div class="feed" id="feed"></div>
+</div>
+
+<div class="composer">
+  <div class="composer-inner">
+    <input type="text" id="questionInput" placeholder="Ask a physician or nurse question…" autocomplete="off">
+    <button id="sendBtn">Send</button>
+  </div>
+</div>
+
+<script>
+  const NURSING_ORCHESTRATION_CONFIG = {
+    retrieve_request: {
+      enabled: true,
+      filter_on_concepts: false,
+      vector_request: {
+        k: 30,
+        min_chunk_length: 5,
+        number_of_results_to_provide: 30,
+        number_of_results_to_try: 20,
+        query_text: "",
+        show_vector: false,
+        status_code: 0
+      }
+    },
+    llm_request: {
+      max_tokens: 100000,
+      model_id: "GPT_41",
+      send_prompt: true,
+      status_code: 0,
+      use_guardrails: true
+    },
+    query_language_translation: false,
+    hybrid_search: { enabled: false, filter_on_concepts: false },
+    query_interpretation: true,
+    query_expansion: false,
+    rerank_main: 0,
+    rerank_sub: 0,
+    rerank_final: 0,
+    hyde: { enabled: false, filter_on_concepts: false },
+    max_reranked_results: 40,
+    max_final_results: 20,
+    citation_validation: true,
+    assess: false,
+    assess_metrics: ["completeness", "comprehension", "accuracy", "faithfulness", "chunk_relevancy", "response_relevancy"]
+  };
+
+  const PROXY_URL = "http://localhost:8010/proxy";
+  let experience = "physician";
+
+  const tabPhysician = document.getElementById("tabPhysician");
+  const tabNurse = document.getElementById("tabNurse");
+  const envSelect = document.getElementById("envSelect");
+  const customUrlWrap = document.getElementById("customUrlWrap");
+  const customUrl = document.getElementById("customUrl");
+  const feed = document.getElementById("feed");
+  const questionInput = document.getElementById("questionInput");
+  const sendBtn = document.getElementById("sendBtn");
+
+  function setExperience(exp) {
+    experience = exp;
+    tabPhysician.classList.toggle("active", exp === "physician");
+    tabNurse.classList.toggle("active", exp === "nurse");
+  }
+  tabPhysician.addEventListener("click", () => setExperience("physician"));
+  tabNurse.addEventListener("click", () => setExperience("nurse"));
+
+  envSelect.addEventListener("change", () => {
+    customUrlWrap.style.display = envSelect.value === "custom" ? "inline-block" : "none";
+  });
+
+  function getBaseUrl() {
+    if (envSelect.value === "custom") {
+      return customUrl.value.trim().replace(/\/$/, "");
+    }
+    return envSelect.value;
+  }
+
+  function buildRequestBody(question) {
+    if (experience === "nurse") {
+      return {
+        query: question,
+        orchestration_config: NURSING_ORCHESTRATION_CONFIG,
+        personalization_setting: "All",
+        ml_flow: false
+      };
+    }
+    return {
+      query: question,
+      personalization_setting: "All"
+    };
+  }
+
+  function getEndpointPath() {
+    return experience === "nurse" ? "/nursing/query" : "/query";
+  }
+
+  function addUserMessage(question) {
+    const row = document.createElement("div");
+    row.className = "msg-row user";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble user";
+    bubble.textContent = question;
+    row.appendChild(bubble);
+    feed.appendChild(row);
+  }
+
+  function addMetaLine(text) {
+    const row = document.createElement("div");
+    row.className = "msg-row";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble meta";
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    feed.appendChild(row);
+  }
+
+  // Confirmed from a live cert response: the generated answer lives at
+  // llm_response.output_text. Everything else (retrieval hits, citation
+  // validation, references, eval metadata) is left as raw JSON for now.
+  function extractAnswerText(parsed) {
+    if (parsed && parsed.llm_response && typeof parsed.llm_response.output_text === "string" && parsed.llm_response.output_text.trim()) {
+      return parsed.llm_response.output_text;
+    }
+    return null;
+  }
+
+  function extractGuardrailStatus(parsed) {
+    if (parsed && parsed.guardrails_output && parsed.guardrails_output.status && parsed.guardrails_output.status !== "NO_ERROR") {
+      return parsed.guardrails_output.status;
+    }
+    return null;
+  }
+
+  function addResponsePanel({ url, method, requestBody, status, ok, durationMs, bodyText }) {
+    const row = document.createElement("div");
+    row.className = "msg-row";
+
+    const wrap = document.createElement("div");
+    wrap.style.width = "100%";
+
+    const badge = document.createElement("span");
+    badge.className = "experience-badge";
+    badge.textContent = experience.toUpperCase();
+
+    const panel = document.createElement("div");
+    panel.className = "response-panel";
+
+    const statusLine = document.createElement("div");
+    statusLine.className = "status-line " + (ok ? "ok" : "err");
+    statusLine.innerHTML = `<span>${method} ${url}</span><span>${ok ? "OK" : "ERROR"} — HTTP ${status} — ${durationMs}ms</span>`;
+    panel.appendChild(statusLine);
+
+    let parsed = null;
+    let parseFailed = false;
+    try {
+      parsed = JSON.parse(bodyText);
+    } catch (e) {
+      parseFailed = true;
+    }
+
+    const answerBlock = document.createElement("div");
+    answerBlock.className = "answer-block";
+
+    if (!ok || parseFailed) {
+      // Error case (HTTP error, fetch failure, or non-JSON body) - show as-is,
+      // same as before this rewrite.
+      const pre = document.createElement("pre");
+      pre.textContent = bodyText;
+      answerBlock.appendChild(pre);
+    } else {
+      const guardrailStatus = extractGuardrailStatus(parsed);
+      if (guardrailStatus) {
+        const note = document.createElement("span");
+        note.className = "guardrail-note";
+        note.textContent = "Guardrails flagged this request: " + guardrailStatus;
+        answerBlock.appendChild(note);
+      }
+
+      const answerText = extractAnswerText(parsed);
+      if (answerText) {
+        const textNode = document.createTextNode(answerText);
+        answerBlock.appendChild(textNode);
+      } else {
+        const note = document.createElement("span");
+        note.className = "no-answer-note";
+        note.textContent = "Could not find llm_response.output_text in this response — see full JSON below.";
+        answerBlock.appendChild(note);
+      }
+    }
+    panel.appendChild(answerBlock);
+
+    wrap.appendChild(badge);
+    wrap.appendChild(panel);
+
+    // Full raw JSON, collapsed by default - expand it when the answer field
+    // is missing so nothing is hidden in the case we don't yet understand.
+    const jsonDetails = document.createElement("details");
+    jsonDetails.className = "raw-json-accordion";
+    if (!ok || parseFailed || !extractAnswerText(parsed)) {
+      jsonDetails.open = true;
+    }
+    const jsonSummary = document.createElement("summary");
+    jsonSummary.textContent = "Full JSON response";
+    const jsonPre = document.createElement("pre");
+    jsonPre.textContent = parseFailed ? bodyText : JSON.stringify(parsed, null, 2);
+    jsonDetails.appendChild(jsonSummary);
+    jsonDetails.appendChild(jsonPre);
+    wrap.appendChild(jsonDetails);
+
+    const reqDetails = document.createElement("details");
+    reqDetails.className = "request-preview";
+    const reqSummary = document.createElement("summary");
+    reqSummary.textContent = "Request body sent";
+    const reqPre = document.createElement("pre");
+    reqPre.textContent = JSON.stringify(requestBody, null, 2);
+    reqDetails.appendChild(reqSummary);
+    reqDetails.appendChild(reqPre);
+    wrap.appendChild(reqDetails);
+
+    row.appendChild(wrap);
+    feed.appendChild(row);
+    row.scrollIntoView({ behavior: "smooth", block: "end" });
+  }
+
+  async function sendQuestion() {
+    const question = questionInput.value.trim();
+    if (!question) return;
+
+    const baseUrl = getBaseUrl();
+    if (!baseUrl) {
+      alert("Set a base URL first (pick an environment or enter a custom one).");
+      return;
+    }
+
+    addUserMessage(question);
+    questionInput.value = "";
+    sendBtn.disabled = true;
+
+    const path = getEndpointPath();
+    const url = baseUrl + path;
+    const requestBody = buildRequestBody(question);
+
+    addMetaLine("Calling " + url + " …");
+
+    const started = performance.now();
+    try {
+      // Routed through the local proxy (proxy_server.py) because CKAI does not
+      // send Access-Control-Allow-Origin headers, so a direct browser fetch()
+      // gets blocked by CORS even though the request itself would succeed.
+      const res = await fetch(PROXY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUrl: url, payload: requestBody })
+      });
+      const durationMs = Math.round(performance.now() - started);
+      const bodyText = await res.text();
+      addResponsePanel({
+        url, method: "POST", requestBody,
+        status: res.status, ok: res.ok, durationMs, bodyText
+      });
+    } catch (err) {
+      const durationMs = Math.round(performance.now() - started);
+      addResponsePanel({
+        url, method: "POST", requestBody,
+        status: "—", ok: false, durationMs,
+        bodyText: "Fetch to the local proxy failed.\n\n" +
+                  String(err) +
+                  "\n\nMost likely cause: proxy_server.py isn't running. Start it with:\n  python3 proxy_server.py\nthen retry. Expected proxy URL: " + PROXY_URL
+      });
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  sendBtn.addEventListener("click", sendQuestion);
+  questionInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendQuestion();
+  });
+</script>
+</body>
+</html>
