@@ -123,24 +123,23 @@ Full integration details (base URL, auth, request/response schema, rate limits) 
 ## 6. Exemplar Policy Library
 
 - The exemplar dataset is being collected now: approximately 40 policy files, split across two categories — medication and infection.
-- Files are static documents; whether/how they get indexed is still being determined based on what's feasible for the prototype.
-- Retrieval approach is intended to be hybrid (keyword + semantic), but specifics are not yet defined. Given the dataset size (~40 files), the actual implementation should stay as simple as practical rather than assuming heavy infrastructure (e.g. a dedicated vector database) up front.
+- Storage and indexing are decided: raw files on the local filesystem (organized by category, with a JSON manifest for metadata/tags), normalized to plain text via an ingestion script, and indexed into a single SQLite file that provides both keyword search (FTS5) and a semantic-search substrate (stored embeddings, brute-force cosine similarity at this scale). No dedicated vector database or search service — full detail in [policy_storage.md](policy_storage.md).
+- Retrieval approach is intended to be hybrid (keyword + semantic), but how the two are combined, and how the CKAI answer feeds back into retrieval, are not yet defined — **TBD**, deliberately kept separate from the storage decision above.
 - No real patient data is involved; more specific data-handling requirements will be defined later.
-
-Indexing/retrieval approach is **TBD**.
 
 ## 7. Prompt Flows
 
-- Physician and nurse experiences use separate prompt flows, built in Python.
-- Each prompt flow receives the user question, the relevant CKAI answer, and retrieved policy content, and produces the final response.
-- Conflicts between clinical guidance and hospital policy guidance (Key Risk #4 in the goals doc) are expected to be handled within the prompt flow itself, not as a separate architectural component.
-- Pydantic is planned for AI eval observability around the prompt flow — the exact eval/logging shape is still open (see Section 8).
+- Physician and nurse experiences use separate prompt flows: an ordered pipeline of typed steps (Pydantic input/output per step), built in Python, not a single prompt. Flows may differ in topology, not just wording. Full pipeline design is in [intelligence_logic.md](intelligence_logic.md).
+- Each flow receives the user question, the relevant CKAI answer, and retrieved policy content, and produces the final response. A dedicated citation validation step, run before the response is finalized, checks that every claim attributed to policy content is backed by evidence actually retrieved for that request — see [intelligence_logic.md §5.2](intelligence_logic.md#52-citation-validation).
+- Conflicts between clinical guidance and hospital policy guidance (Key Risk #4 in the goals doc) are handled within the prompt flow itself, as an explicit conflict-check step, not as a separate architectural component.
+- The flow is manually designed with explicit conditional logic, not an agentic/autonomous framework, at this stage — chosen for reproducible, attributable eval results. Revisit only if eval shows a specific step needs variable-length reasoning a fixed step can't express (see [intelligence_logic.md §7](intelligence_logic.md#7-agents-deferred-not-adopted-at-this-stage)).
+- Pydantic (open-source core library only — no Logfire or other Pydantic-hosted service) enforces structured step contracts and underpins AI eval observability around the prompt flow — see [intelligence_logic.md §6](intelligence_logic.md#6-pydantics-role).
 
 ## 8. Testing, Logging, And Observability
 
-For SME/user testing, session logs (question, CKAI answer, retrieved policy, final response) may be needed to support review and scoring. Tooling for this — including whether a tool like Ballpark is feasible for tracking behavioral data at prototype scale — is still being evaluated.
-
-This is **TBD** and should be revisited once the retrieval and prompt-flow implementation is further along.
+- For SME/user testing, session logs (question, CKAI answer, retrieved policy, final response) may be needed to support review and scoring.
+- The log record's *shape* is decided: a `PipelineRun` Pydantic model wrapping a full request, with per-step records (prompt version, input, output, latency, model used, and citation validation outcomes) — see [intelligence_logic.md §6](intelligence_logic.md#6-pydantics-role). This runs entirely on the open-source `pydantic` library; no Pydantic-hosted/SaaS observability (e.g. Logfire) is used.
+- Where that record is stored/reviewed — including whether a tool like Ballpark is feasible at prototype scale — is still **TBD** and should be revisited once the retrieval and prompt-flow implementation is further along.
 
 ## 9. Local Development And Hosting
 
@@ -152,7 +151,9 @@ This is **TBD** and should be revisited once the retrieval and prompt-flow imple
 
 - CKAI API contract (auth, request/response schema, rate limits, multi-turn conversation model) — [ckai_api.md](ckai_api.md)
 - Hosting environment
-- Retrieval/indexing approach for the exemplar policy library
+- Retrieval scoring/combination approach (keyword + semantic) for the exemplar policy library, and how the CKAI answer refines retrieval — storage/indexing itself is decided, see [policy_storage.md](policy_storage.md)
 - Data-handling/security requirements (confirmed no real patient data, but specifics pending)
-- Logging and eval tooling feasibility (e.g. Ballpark) for SME/user testing
+- Logging/eval tooling *destination* (e.g. Ballpark) for SME/user testing — the log record shape itself is decided, see [intelligence_logic.md §6](intelligence_logic.md#6-pydantics-role)
+- Response-creation prompt content, physician and nurse — not yet designed; the pipeline contract it plugs into is, see [intelligence_logic.md §5](intelligence_logic.md#5-response-creation)
+- Whether any pipeline step is upgraded to a bounded agentic loop — deferred pending eval results, see [intelligence_logic.md §7](intelligence_logic.md#7-agents-deferred-not-adopted-at-this-stage)
 - Front-end framework choice (React, Vue, etc.) — deferred, spec stays framework-agnostic

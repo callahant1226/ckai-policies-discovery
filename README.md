@@ -17,6 +17,8 @@ specs/                        Planning and design documents
   goals_and_aims.md              Why this prototype exists, primary goal, key risks
   technical_spec.md              Proposed architecture (v5): TypeScript front end + Python backend, CKAI integration, open items
   ckai_api.md                    CKAI API contract: endpoints, request/response schema, auth, guardrails
+  policy_storage.md              Exemplar policy library: raw file layout, manifest, ingestion pipeline, SQLite index (keyword + vector)
+  intelligence_logic.md          Prompt-flow pipeline: typed steps, citation validation, Pydantic's role, agents-vs-manual-flow decision
   discovery-team-framework.md    Discovery team working framework
 
 openapi.json                   CKAI's OpenAPI schema, captured live from the cert environment
@@ -30,7 +32,9 @@ README.md                      This file
 - **Architecture drafted.** TypeScript front end (framework TBD) as a pure client, Python backend as a JSON API doing the CKAI call, policy retrieval, and prompt flow — see [specs/technical_spec.md](specs/technical_spec.md).
 - **CKAI API confirmed and documented.** No API key required; access is gated by being on the Elsevier network/VPN. Full endpoint list, request schema, the mandatory nursing `orchestration_config`, and a real captured response shape are in [specs/ckai_api.md](specs/ckai_api.md).
 - **End-to-end smoke test working.** [local_api_test.html](local_api_test.html) calls the real cert CKAI API (via [proxy_server.py](proxy_server.py), which works around both a CORS restriction and a local TLS trust issue) and renders the actual generated answer, with the full raw JSON available in a collapsed accordion for debugging.
-- **Not yet started:** the real Python backend, the real front end, and the exemplar policy retrieval pipeline (~40 policy files across medication and infection categories, still being collected).
+- **Storage/indexing approach decided.** Raw files on disk + JSON manifest, normalized via an ingestion script, indexed into one SQLite file (FTS5 keyword search + stored embeddings for semantic search) — see [specs/policy_storage.md](specs/policy_storage.md). How retrieval scores/combines keyword + semantic, and how it's refined by the CKAI answer, is still open.
+- **Intelligence-logic pipeline design decided.** A manually designed, per-experience pipeline of typed (Pydantic) steps — intent extraction, retrieval, CKAI call, retrieval refinement, then response creation (draft → citation validation → conflict check → formatting) — with agents explicitly deferred in favor of a fixed flow for reproducible eval. Uses open-source `pydantic` only, no hosted/SaaS observability. See [specs/intelligence_logic.md](specs/intelligence_logic.md). Response-creation prompt content itself is not yet designed.
+- **Not yet started:** the real Python backend, the real front end, the ingestion script, the response-creation prompts, and collecting the ~40 exemplar policy files (medication and infection categories).
 
 ## Running The Test Harness
 
